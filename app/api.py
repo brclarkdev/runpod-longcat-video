@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from app import config
 from app.job_store import JobStore
 from app.longcat_service import LongCatService
+from app.output_delivery import deliver_video
 from app.schemas import ImageVideoRequest, JobResponse, JobStatus, TextVideoRequest
 from app.security import ensure_upload_size
 
@@ -64,7 +65,8 @@ def _run_text(job_id: str, req: TextVideoRequest):
     store.update(job_id, status=JobStatus.running.value)
     try:
         output = get_service().generate_text_video(job_id=job_id, **req.model_dump())
-        store.update(job_id, status=JobStatus.completed.value, output_path=str(output))
+        delivery = deliver_video(output, job_id)
+        store.update(job_id, status=JobStatus.completed.value, **delivery)
     except Exception as exc:
         store.update(job_id, status=JobStatus.failed.value, error=repr(exc))
 
@@ -90,7 +92,8 @@ def _run_image(job_id: str, req: ImageVideoRequest, image_path: Path):
             use_distill=req.use_distill,
             use_refine=req.use_refine,
         )
-        store.update(job_id, status=JobStatus.completed.value, output_path=str(output))
+        delivery = deliver_video(output, job_id)
+        store.update(job_id, status=JobStatus.completed.value, **delivery)
     except Exception as exc:
         store.update(job_id, status=JobStatus.failed.value, error=repr(exc))
 

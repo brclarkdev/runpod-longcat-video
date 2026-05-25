@@ -67,4 +67,6 @@ class JobResponse(BaseModel):
     job_id: str
     status: JobStatus
     output_path: Optional[str] = None
+    video_url: Optional[str] = None
+    object_key: Optional[str] = None
     error: Optional[str] = None

@@ -24,6 +24,8 @@ class JobStore:
             "updated_at": time.time(),
             "payload": payload,
             "output_path": None,
+            "video_url": None,
+            "object_key": None,
             "error": None,
         }
         with self._lock:

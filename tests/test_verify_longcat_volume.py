@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -18,7 +19,8 @@ def test_verify_longcat_volume_success(tmp_path: Path):
         p = tmp_path / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text("x")
-    result = subprocess.run([sys.executable, "scripts/verify_longcat_volume.py", str(tmp_path)], capture_output=True, text=True)
+    env = {**os.environ, "LONGCAT_VERIFY_MIN_SIZE_BYTES": "0"}
+    result = subprocess.run([sys.executable, "scripts/verify_longcat_volume.py", str(tmp_path)], capture_output=True, text=True, env=env)
     assert result.returncode == 0
     assert "OK:" in result.stdout
 

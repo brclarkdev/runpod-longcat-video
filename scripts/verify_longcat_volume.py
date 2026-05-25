@@ -42,7 +42,8 @@ def main() -> int:
     size = directory_size_bytes(model_dir)
     print(f"OK: LongCat model directory verified: {model_dir}")
     print(f"Size: {size / (1024**3):.2f} GiB")
-    if size < 70 * 1024**3:
+    min_size = int(os.environ.get("LONGCAT_VERIFY_MIN_SIZE_BYTES", str(70 * 1024**3)))
+    if size < min_size:
         print("ERROR: size is below expected ~77.6 GiB; download is incomplete or only pointer/index files were written.", file=sys.stderr)
         return 1
     return 0

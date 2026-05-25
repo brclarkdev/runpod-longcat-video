@@ -318,4 +318,15 @@ Checked: 2026-05-25T04:58:53Z
 
 ## Production API caveat
 
-The current handler returns an on-volume output path such as `/runpod-volume/outputs/<job_id>/output.mp4`. This proves generation completed, but production clients still need an output delivery layer. Before exposing this as a customer-facing API, add object storage upload (S3/R2/B2/etc.), return a signed URL, and add retention cleanup for old files under `/runpod-volume/outputs`.
+The current service can either return an on-volume output path or upload the MP4 to S3-compatible object storage and return a `video_url`. Enable object storage with:
+
+```text
+LONGCAT_OUTPUT_DELIVERY=s3
+LONGCAT_S3_BUCKET=<bucket-name>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
+```
+
+For Cloudflare R2/B2/MinIO-style providers, also set `LONGCAT_S3_ENDPOINT_URL` and `LONGCAT_S3_REGION`. Optional `LONGCAT_S3_PUBLIC_BASE_URL` returns CDN/public URLs instead of presigned URLs.
+
+The current deployed Serverless endpoint must be updated with these environment variables and a rebuilt image before new jobs return downloadable URLs. Existing generated outputs remain on the RunPod network volume until uploaded separately.

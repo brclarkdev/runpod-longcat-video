@@ -87,3 +87,52 @@ curl http://localhost:8000/ready
 ```bash
 curl -X POST http://localhost:8000/v1/video/text   -H 'Content-Type: application/json'   -d '{"prompt":"A red ball rolls across a wooden table, cinematic lighting.","use_distill":true,"use_refine":false}'
 ```
+
+## Video delivery
+
+By default, generated videos remain on the attached RunPod volume and responses include only an on-volume `output_path`.
+
+For production/client access, enable S3-compatible object storage delivery. This works with AWS S3, Cloudflare R2, Backblaze B2, MinIO, and other S3-compatible providers.
+
+Required environment:
+
+```bash
+LONGCAT_OUTPUT_DELIVERY=s3
+LONGCAT_S3_BUCKET=<bucket-name>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
+```
+
+Common optional environment:
+
+```bash
+# Object key prefix. Defaults to longcat-outputs.
+LONGCAT_S3_PREFIX=longcat-outputs
+
+# Required for R2/B2/MinIO or any non-AWS S3-compatible endpoint.
+LONGCAT_S3_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+LONGCAT_S3_REGION=auto
+
+# Presigned URL lifetime in seconds. Defaults to 86400.
+LONGCAT_S3_PRESIGN_EXPIRES=86400
+
+# If files are served through a public bucket/CDN, return this URL instead of presigning.
+LONGCAT_S3_PUBLIC_BASE_URL=https://cdn.example.com/videos
+
+# Optional for S3-compatible providers that require path-style addressing.
+LONGCAT_S3_ADDRESSING_STYLE=path
+```
+
+Serverless completion responses then include `video_url` and `object_key`:
+
+```json
+{
+  "job_id": "...",
+  "status": "completed",
+  "output_path": "/runpod-volume/outputs/.../output.mp4",
+  "video_url": "https://signed-download-url...",
+  "object_key": "longcat-outputs/.../output.mp4"
+}
+```
+
+For Pod API mode, `GET /v1/jobs/{job_id}` returns the same fields. The legacy `GET /v1/jobs/{job_id}/video` endpoint still serves the local volume file while the Pod is running.
