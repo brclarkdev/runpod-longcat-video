@@ -149,3 +149,173 @@ Serverless:
 RUNPOD_VOLUME_ROOT=/runpod-volume
 LONGCAT_MODEL_DIR=/runpod-volume/models/LongCat-Video
 ```
+
+## Service image
+
+Built and pushed: 2026-05-25
+
+- Repository: `https://github.com/brclarkdev/runpod-longcat-video`
+- Image: `ghcr.io/brclarkdev/runpod-longcat-video:latest`
+- Verified image tags:
+  - `latest`
+  - `a51807eefc7e` or newer from the `main` branch build
+- Build workflow: `.github/workflows/build-image.yml`
+
+The image keeps model weights out of the container and reads the hydrated RunPod network volume at runtime.
+
+## Pod API smoke test
+
+Verified: 2026-05-25T04:47Z
+
+A normal Pod was used before Serverless because it gives faster API visibility for first-runtime failures.
+
+Final successful smoke Pod:
+
+- Name: `longcat-pod-smoke-80gb`
+- ID: `kt1jj3t6r0qrbo`
+- GPU: `NVIDIA A100-SXM4-80GB`
+- Datacenter: `US-KS-2`
+- Image: `ghcr.io/brclarkdev/runpod-longcat-video:latest`
+- Network volume: `06j8ee9sbn`
+- Volume mount: `/workspace`
+- API proxy: `https://kt1jj3t6r0qrbo-8000.proxy.runpod.net`
+- Cost reported by RunPod API: `$1.49/hr`
+- Cleanup: Pod deleted after the smoke test.
+
+Readiness check returned:
+
+```json
+{
+  "ok": true,
+  "skip_model_load": false,
+  "load_model_on_startup": false,
+  "model_loaded": false,
+  "model_dir": "/workspace/models/LongCat-Video",
+  "model_dir_exists": true,
+  "production_ready": true,
+  "output_dir": "/workspace/outputs"
+}
+```
+
+Successful text-to-video smoke request:
+
+```json
+{
+  "prompt": "A red ball rolls across a wooden table, cinematic lighting.",
+  "height": 480,
+  "width": 832,
+  "num_frames": 93,
+  "seed": 123,
+  "use_distill": true,
+  "use_refine": false
+}
+```
+
+Result:
+
+```json
+{
+  "job_id": "c8cfe9fdcb104c1cb07eadf499aa4fcc",
+  "status": "completed",
+  "output_path": "/workspace/outputs/c8cfe9fdcb104c1cb07eadf499aa4fcc/output.mp4"
+}
+```
+
+Capacity/runtime lesson:
+
+- A `NVIDIA L40` Pod (`si6phkafh8s769`, deleted) started the API successfully but failed generation at 480p/93 frames with CUDA OOM after using about 44 GiB. Treat RTX A6000/L40-class 48 GB GPUs as not validated for the current full 480p/93-frame LongCat scaffold.
+- The validated initial target for this image and request shape is 1x `NVIDIA A100-SXM4-80GB`.
+
+## Serverless endpoint
+
+Created and smoke-tested: 2026-05-25T04:58:53Z
+
+Template:
+
+- Name: `longcat-video-serverless-a100`
+- ID: `9re9ivkicj`
+- Image: `ghcr.io/brclarkdev/runpod-longcat-video:latest`
+- Container disk: 30 GB
+- Serverless: true
+- Environment:
+
+```text
+MODE_TO_RUN=serverless
+RUNPOD_VOLUME_ROOT=/runpod-volume
+LONGCAT_MODEL_DIR=/runpod-volume/models/LongCat-Video
+LONGCAT_OUTPUT_DIR=/runpod-volume/outputs
+LONGCAT_JOB_DIR=/runpod-volume/jobs
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+```
+
+Endpoint:
+
+- Name: `longcat-video-a100-us-ks-2`
+- ID: `ie54y9szieajfb`
+- GPU: `NVIDIA A100-SXM4-80GB`
+- GPU count: 1
+- Datacenter: `US-KS-2`
+- Network volume: `06j8ee9sbn`
+- Workers min/max: `0/1`
+- Idle timeout: 60 seconds
+- Execution timeout: 1200 seconds
+- Autoscale: request count threshold 1
+
+Serverless smoke request was submitted to:
+
+```text
+POST https://api.runpod.ai/v2/ie54y9szieajfb/run
+```
+
+Request body:
+
+```json
+{
+  "input": {
+    "mode": "text",
+    "prompt": "A red ball rolls across a wooden table, cinematic lighting.",
+    "height": 480,
+    "width": 832,
+    "num_frames": 93,
+    "seed": 321,
+    "use_distill": true,
+    "use_refine": false
+  }
+}
+```
+
+RunPod job result:
+
+```json
+{
+  "id": "3804687d-c16c-4222-afc8-de9b6215b1c1-u2",
+  "status": "COMPLETED",
+  "delayTime": 113638,
+  "executionTime": 469217,
+  "workerId": "vrp31hssmoqqqa",
+  "output": {
+    "job_id": "4ea498903e3092f9",
+    "status": "completed",
+    "output_path": "/runpod-volume/outputs/4ea498903e3092f9/output.mp4"
+  }
+}
+```
+
+Use async status polling for realistic jobs:
+
+```bash
+curl -H "Authorization: Bearer $RUNPOD_API_KEY" \
+  https://api.runpod.ai/v2/ie54y9szieajfb/status/<runpod_job_id>
+```
+
+## Cleanup state after deployment
+
+Checked: 2026-05-25T04:58:53Z
+
+- `runpodctl pod list --all` returned `[]`; the temporary smoke Pods were deleted.
+- The Serverless endpoint remains intentionally active as the service entrypoint, with `workersMin=0` and `idleTimeout=60`, so it should scale down when idle.
+- The network volume `06j8ee9sbn` remains intentionally active because it stores the hydrated LongCat model and generated outputs.
+
+## Production API caveat
+
+The current handler returns an on-volume output path such as `/runpod-volume/outputs/<job_id>/output.mp4`. This proves generation completed, but production clients still need an output delivery layer. Before exposing this as a customer-facing API, add object storage upload (S3/R2/B2/etc.), return a signed URL, and add retention cleanup for old files under `/runpod-volume/outputs`.
