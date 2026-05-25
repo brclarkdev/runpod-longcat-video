@@ -29,7 +29,7 @@ def get_service() -> LongCatService:
 def startup():
     config.LONGCAT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     config.LONGCAT_JOB_DIR.mkdir(parents=True, exist_ok=True)
-    if not config.SKIP_MODEL_LOAD:
+    if config.LOAD_MODEL_ON_STARTUP and not config.SKIP_MODEL_LOAD:
         get_service()
 
 
@@ -44,10 +44,20 @@ def ready():
     return {
         "ok": True,
         "skip_model_load": config.SKIP_MODEL_LOAD,
+        "load_model_on_startup": config.LOAD_MODEL_ON_STARTUP,
         "model_loaded": bool(svc and svc.loaded),
         "model_dir": str(config.LONGCAT_MODEL_DIR),
+        "model_dir_exists": config.LONGCAT_MODEL_DIR.exists(),
+        "production_ready_marker": str(config.RUNPOD_VOLUME_ROOT / "longcat_volume.production_ready"),
+        "production_ready": (config.RUNPOD_VOLUME_ROOT / "longcat_volume.production_ready").exists(),
         "output_dir": str(config.LONGCAT_OUTPUT_DIR),
     }
+
+
+@app.post("/v1/model/load")
+def load_model():
+    svc = get_service()
+    return {"ok": True, "model_loaded": svc.loaded, "model_dir": str(config.LONGCAT_MODEL_DIR)}
 
 
 def _run_text(job_id: str, req: TextVideoRequest):

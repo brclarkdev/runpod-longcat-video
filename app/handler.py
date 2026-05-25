@@ -22,26 +22,29 @@ async def handler(event):
     data = event.get("input", {})
     mode = data.get("mode", "text")
     job_id = data.get("job_id") or os.urandom(8).hex()
-    if mode == "text":
-        req = TextVideoRequest(**{k: v for k, v in data.items() if k in TextVideoRequest.model_fields})
-        output = get_service().generate_text_video(job_id=job_id, **req.model_dump())
-        return {"job_id": job_id, "status": "completed", "output_path": str(output)}
-    if mode == "image":
-        req = ImageVideoRequest(**{k: v for k, v in data.items() if k in ImageVideoRequest.model_fields})
-        image_path = _materialize_image(data, job_id)
-        output = get_service().generate_image_video(
-            job_id=job_id,
-            image_path=image_path,
-            prompt=req.prompt,
-            negative_prompt=req.negative_prompt,
-            resolution=req.resolution,
-            num_frames=req.num_frames,
-            seed=req.seed,
-            use_distill=req.use_distill,
-            use_refine=req.use_refine,
-        )
-        return {"job_id": job_id, "status": "completed", "output_path": str(output)}
-    raise ValueError("mode must be text or image")
+    try:
+        if mode == "text":
+            req = TextVideoRequest(**{k: v for k, v in data.items() if k in TextVideoRequest.model_fields})
+            output = get_service().generate_text_video(job_id=job_id, **req.model_dump())
+            return {"job_id": job_id, "status": "completed", "output_path": str(output)}
+        if mode == "image":
+            req = ImageVideoRequest(**{k: v for k, v in data.items() if k in ImageVideoRequest.model_fields})
+            image_path = _materialize_image(data, job_id)
+            output = get_service().generate_image_video(
+                job_id=job_id,
+                image_path=image_path,
+                prompt=req.prompt,
+                negative_prompt=req.negative_prompt,
+                resolution=req.resolution,
+                num_frames=req.num_frames,
+                seed=req.seed,
+                use_distill=req.use_distill,
+                use_refine=req.use_refine,
+            )
+            return {"job_id": job_id, "status": "completed", "output_path": str(output)}
+        raise ValueError("mode must be text or image")
+    except Exception as exc:
+        return {"job_id": job_id, "status": "failed", "error": repr(exc)}
 
 
 def _materialize_image(data: dict, job_id: str) -> Path:

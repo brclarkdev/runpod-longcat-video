@@ -17,6 +17,7 @@ HF_HOME = Path(os.environ.get("HF_HOME", str(RUNPOD_VOLUME_ROOT / "cache" / "hug
 LONGCAT_OUTPUT_DIR = Path(os.environ.get("LONGCAT_OUTPUT_DIR", str(RUNPOD_VOLUME_ROOT / "outputs")))
 LONGCAT_JOB_DIR = Path(os.environ.get("LONGCAT_JOB_DIR", str(RUNPOD_VOLUME_ROOT / "jobs")))
 SKIP_MODEL_LOAD = os.environ.get("LONGCAT_SKIP_MODEL_LOAD", "0") == "1"
+LOAD_MODEL_ON_STARTUP = os.environ.get("LONGCAT_LOAD_ON_STARTUP", "0") == "1"
 DEFAULT_NEGATIVE_PROMPT = os.environ.get(
     "LONGCAT_DEFAULT_NEGATIVE_PROMPT",
     "Bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards",
