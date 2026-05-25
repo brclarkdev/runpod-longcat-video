@@ -9,28 +9,55 @@ Created/verified: 2026-05-24
 - Datacenter: `US-KS-2`
 - Size: 250 GB
 
-## Next step: hydrate the volume
+## Hydration Pod
 
-Launch a temporary RunPod Secure Cloud Pod in `US-KS-2` with network volume `longcat-video-primary` attached.
+Created: 2026-05-24
 
-Inside that Pod:
+- Name: `longcat-hydrate-once`
+- ID: `9nsnmqb3f716sn`
+- Datacenter: `US-KS-2`
+- Network volume: `longcat-video-primary` / `06j8ee9sbn`
+- Volume mount: `/workspace`
+- Image: `ubuntu:22.04`
+- Status at creation: `RUNNING`
+- Cost reported by RunPod API: `$0.82/hr`
 
-```bash
-cd /workspace
-# Clone or copy this repo into the Pod, then:
-cd runpod-longcat-video
-bash scripts/hydrate_longcat_volume.sh
-```
-
-The hydration script will download LongCat directly into:
+The Pod startup command hydrates LongCat directly into:
 
 ```text
 /workspace/models/LongCat-Video
 ```
 
+It writes:
+
+```text
+/workspace/longcat_hydration.log
+/workspace/longcat_hydration.done      # success marker
+/workspace/longcat_hydration.failed    # failure marker
+```
+
 Expected model size: about 77.6 GiB.
 
-After hydration succeeds, terminate the temporary Pod but keep the network volume.
+## Monitoring locally
+
+```bash
+set -a
+. /Users/brandonclark/.hermes/.env
+set +a
+python3 - <<'PY'
+import json, os, urllib.request
+key=os.environ['RUNPOD_API_KEY']
+req=urllib.request.Request(
+    'https://rest.runpod.io/v1/pods/9nsnmqb3f716sn?includeNetworkVolume=true&includeMachine=true',
+    headers={'Authorization':f'Bearer {key}','Accept':'application/json'},
+)
+with urllib.request.urlopen(req, timeout=60) as r:
+    p=json.load(r)
+print(json.dumps({k:p.get(k) for k in ['id','name','desiredStatus','costPerHr','machineId','networkVolume']}, indent=2))
+PY
+```
+
+When hydration is complete, the container should exit. Verify the volume from a Pod terminal or via RunPod volume file access, then terminate/delete the temporary hydration Pod if it is still present.
 
 ## Runtime paths
 
