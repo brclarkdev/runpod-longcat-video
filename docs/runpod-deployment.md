@@ -322,11 +322,14 @@ The current service can either return an on-volume output path or upload the MP4
 
 ```text
 LONGCAT_OUTPUT_DELIVERY=s3
-LONGCAT_S3_BUCKET=<bucket-name>
+LONGCAT_S3_BUCKET=06j8ee9sbn
+LONGCAT_S3_ENDPOINT_URL=https://s3api-us-ks-2.runpod.io
+LONGCAT_S3_REGION=US-KS-2
+LONGCAT_S3_ADDRESSING_STYLE=path
 AWS_ACCESS_KEY_ID=<access-key>
 AWS_SECRET_ACCESS_KEY=<secret-key>
 ```
 
-For Cloudflare R2/B2/MinIO-style providers, also set `LONGCAT_S3_ENDPOINT_URL` and `LONGCAT_S3_REGION`. Optional `LONGCAT_S3_PUBLIC_BASE_URL` returns CDN/public URLs instead of presigned URLs.
+For RunPod's S3-compatible network-volume API, `LONGCAT_S3_BUCKET` is the network volume ID. The S3 credentials must be a RunPod S3 API key created in the RunPod console; the regular RunPod API key is not enough. Optional `LONGCAT_S3_PUBLIC_BASE_URL` returns CDN/public URLs instead of presigned URLs.
 
-The current deployed Serverless endpoint must be updated with these environment variables and a rebuilt image before new jobs return downloadable URLs. Existing generated outputs remain on the RunPod network volume until uploaded separately.
+The deployed Serverless template has the non-secret RunPod S3 location values staged, but `LONGCAT_OUTPUT_DELIVERY=s3`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are intentionally not enabled until S3 API credentials are provided and a smoke request verifies the returned `video_url`. Existing generated outputs remain on the RunPod network volume until uploaded separately.

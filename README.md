@@ -94,6 +94,17 @@ By default, generated videos remain on the attached RunPod volume and responses 
 
 For production/client access, enable S3-compatible object storage delivery. This works with AWS S3, Cloudflare R2, Backblaze B2, MinIO, and other S3-compatible providers.
 
+For the hydrated RunPod network volume in `US-KS-2`, the S3-compatible target is:
+
+```bash
+LONGCAT_S3_BUCKET=06j8ee9sbn
+LONGCAT_S3_ENDPOINT_URL=https://s3api-us-ks-2.runpod.io
+LONGCAT_S3_REGION=US-KS-2
+LONGCAT_S3_ADDRESSING_STYLE=path
+```
+
+RunPod S3 access requires a separate S3 API key from the RunPod console; the regular RunPod API key is not sufficient.
+
 Required environment:
 
 ```bash
