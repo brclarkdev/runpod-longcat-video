@@ -24,6 +24,7 @@ def test_serverless_handler_returns_video_url_from_delivery(monkeypatch, tmp_pat
             "output_path": str(path),
             "video_url": "https://signed.example/video.mp4",
             "object_key": f"outputs/{job_id}/output.mp4",
+            "s3_uri": f"s3://bucket/outputs/{job_id}/output.mp4",
         },
     )
 
@@ -47,4 +48,5 @@ def test_serverless_handler_returns_video_url_from_delivery(monkeypatch, tmp_pat
         "output_path": str(output),
         "video_url": "https://signed.example/video.mp4",
         "object_key": "outputs/job-with-url/output.mp4",
+        "s3_uri": "s3://bucket/outputs/job-with-url/output.mp4",
     }

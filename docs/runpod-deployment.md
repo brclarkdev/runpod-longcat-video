@@ -330,6 +330,16 @@ AWS_ACCESS_KEY_ID=<access-key>
 AWS_SECRET_ACCESS_KEY=<secret-key>
 ```
 
-For RunPod's S3-compatible network-volume API, `LONGCAT_S3_BUCKET` is the network volume ID. The S3 credentials must be a RunPod S3 API key created in the RunPod console; the regular RunPod API key is not enough. Optional `LONGCAT_S3_PUBLIC_BASE_URL` returns CDN/public URLs instead of presigned URLs.
+For RunPod's S3-compatible network-volume API, `LONGCAT_S3_BUCKET` is the network volume ID. The S3 credentials must be a RunPod S3 API key created in the RunPod console; the regular RunPod API key is not enough. RunPod documents `GeneratePresignedURL` / `aws s3 presign` as unsupported, and local verification returned HTTP 403 for generated presigned URLs. For this target, the service returns `video_url: null` plus `object_key` and `s3_uri`; download with authenticated S3 tooling:
 
-The deployed Serverless template has the non-secret RunPod S3 location values staged, but `LONGCAT_OUTPUT_DELIVERY=s3`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are intentionally not enabled until S3 API credentials are provided and a smoke request verifies the returned `video_url`. Existing generated outputs remain on the RunPod network volume until uploaded separately.
+```bash
+aws s3 cp \
+  --region US-KS-2 \
+  --endpoint-url https://s3api-us-ks-2.runpod.io \
+  s3://06j8ee9sbn/longcat-outputs/<job_id>/output.mp4 \
+  ./output.mp4
+```
+
+Optional `LONGCAT_S3_PUBLIC_BASE_URL` returns CDN/public URLs instead of presigned URLs when using a storage target that has a public/CDN URL.
+
+The deployed Serverless template is configured for RunPod S3 delivery. Existing generated outputs remain on the RunPod network volume until uploaded separately.

@@ -69,4 +69,5 @@ class JobResponse(BaseModel):
     output_path: Optional[str] = None
     video_url: Optional[str] = None
     object_key: Optional[str] = None
+    s3_uri: Optional[str] = None
     error: Optional[str] = None

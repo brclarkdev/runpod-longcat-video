@@ -1,5 +1,6 @@
 from pathlib import Path
-from urllib.parse import quote
+from typing import Optional
+from urllib.parse import quote, urlparse
 
 from botocore.config import Config
 
@@ -11,7 +12,7 @@ def deliver_video(path: Path, job_id: str) -> dict:
     path = Path(path)
     delivery = config.OUTPUT_DELIVERY.lower()
     if delivery in {"", "volume", "local"}:
-        return {"output_path": str(path), "video_url": None, "object_key": None}
+        return {"output_path": str(path), "video_url": None, "object_key": None, "s3_uri": None}
     if delivery in {"s3", "object_storage", "r2", "b2"}:
         return _deliver_s3(path, job_id)
     raise RuntimeError(f"Unsupported LONGCAT_OUTPUT_DELIVERY={config.OUTPUT_DELIVERY!r}")
@@ -34,6 +35,7 @@ def _deliver_s3(path: Path, job_id: str) -> dict:
         "output_path": str(path),
         "video_url": _video_url(bucket, key),
         "object_key": key,
+        "s3_uri": f"s3://{bucket}/{key}",
     }
 
 
@@ -43,15 +45,26 @@ def _object_key(job_id: str, filename: str) -> str:
     return f"{prefix}/{key}" if prefix else key
 
 
-def _video_url(bucket: str, key: str) -> str:
+def _video_url(bucket: str, key: str) -> Optional[str]:
     public_base = config.OBJECT_STORAGE_PUBLIC_BASE_URL.rstrip("/")
     if public_base:
         return f"{public_base}/{quote(key)}"
+    if _is_runpod_s3_endpoint():
+        # RunPod's network-volume S3-compatible API documents
+        # GeneratePresignedURL / `aws s3 presign` as unsupported. Return the
+        # object key and s3_uri instead of a URL that will 403 for clients.
+        return None
     return _s3_client().generate_presigned_url(
         "get_object",
         Params={"Bucket": bucket, "Key": key},
         ExpiresIn=config.OBJECT_STORAGE_PRESIGN_EXPIRES,
     )
+
+
+def _is_runpod_s3_endpoint() -> bool:
+    parsed = urlparse(str(config.OBJECT_STORAGE_ENDPOINT_URL))
+    host = str(parsed.hostname or "")
+    return host.endswith(".runpod.io") and host.startswith("s3api-")
 
 
 def _s3_client():

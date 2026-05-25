@@ -103,7 +103,7 @@ LONGCAT_S3_REGION=US-KS-2
 LONGCAT_S3_ADDRESSING_STYLE=path
 ```
 
-RunPod S3 access requires a separate S3 API key from the RunPod console; the regular RunPod API key is not sufficient.
+RunPod S3 access requires a separate S3 API key from the RunPod console; the regular RunPod API key is not sufficient. RunPod's S3-compatible network-volume API does not support presigned URLs, so this target returns `s3_uri`/`object_key` for authenticated download instead of a public `video_url`.
 
 Required environment:
 
@@ -134,7 +134,7 @@ LONGCAT_S3_PUBLIC_BASE_URL=https://cdn.example.com/videos
 LONGCAT_S3_ADDRESSING_STYLE=path
 ```
 
-Serverless completion responses then include `video_url` and `object_key`:
+Serverless completion responses then include delivery metadata:
 
 ```json
 {
@@ -142,8 +142,19 @@ Serverless completion responses then include `video_url` and `object_key`:
   "status": "completed",
   "output_path": "/runpod-volume/outputs/.../output.mp4",
   "video_url": "https://signed-download-url...",
-  "object_key": "longcat-outputs/.../output.mp4"
+  "object_key": "longcat-outputs/.../output.mp4",
+  "s3_uri": "s3://bucket/longcat-outputs/.../output.mp4"
 }
+```
+
+For RunPod S3 specifically, `video_url` is `null` because presigned URLs are unsupported. Download with authenticated S3 tooling instead:
+
+```bash
+aws s3 cp \
+  --region US-KS-2 \
+  --endpoint-url https://s3api-us-ks-2.runpod.io \
+  s3://06j8ee9sbn/longcat-outputs/<job_id>/output.mp4 \
+  ./output.mp4
 ```
 
 For Pod API mode, `GET /v1/jobs/{job_id}` returns the same fields. The legacy `GET /v1/jobs/{job_id}/video` endpoint still serves the local volume file while the Pod is running.
