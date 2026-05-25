@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+
+# LongCat / model artifacts
+weights/
+models/
+outputs/
+jobs/
+cache/
+*.mp4
+*.mov
+*.avi
+
+# Build artifacts
+.DS_Store
+dist/
+build/
+*.egg-info/

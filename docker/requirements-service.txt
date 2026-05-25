@@ -1,0 +1,9 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+aiofiles==24.1.0
+requests==2.32.3
+runpod==1.7.7
+huggingface_hub[cli]==0.27.1
+boto3==1.35.90
