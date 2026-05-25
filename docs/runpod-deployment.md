@@ -353,7 +353,8 @@ Live update: 2026-05-25
   - `LONGCAT_S3_PREFIX=longcat-outputs`
   - `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are set in the RunPod template environment only; they are not committed to this repository.
 - The repo code was updated to return `s3_uri` for RunPod S3 instead of a broken presigned URL.
-- Until a rebuilt image is available, the template uses a `dockerEntrypoint` override that copies patched Python files from `/runpod-volume/overrides/app/` into `/app/app/` before starting the normal entrypoint.
+- Image `ghcr.io/brclarkdev/runpod-longcat-video:latest` and tag `f7f7b86e488f` are pushed with digest `sha256:a7ad482eccadaf43cd0ef9549598a754372a340628ac211a169138009791a2e9` and include the RunPod S3 `s3_uri` fix.
+- The temporary `dockerEntrypoint` override was removed after the rebuilt image was confirmed in GHCR; the template now uses the image's normal entrypoint.
 - Authenticated S3 probe succeeded with `put_object`, `head_object`, direct `get_object`, and cleanup of a temporary probe object. Generated presigned URLs were verified to return HTTP 403, matching RunPod's docs.
 - A Serverless smoke generation job was submitted but remained `IN_QUEUE` on the A100 endpoint long enough to indicate capacity delay; it was cancelled before execution to avoid unexpected later spend.
 
