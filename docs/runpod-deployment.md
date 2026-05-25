@@ -342,4 +342,19 @@ aws s3 cp \
 
 Optional `LONGCAT_S3_PUBLIC_BASE_URL` returns CDN/public URLs instead of presigned URLs when using a storage target that has a public/CDN URL.
 
-The deployed Serverless template is configured for RunPod S3 delivery. Existing generated outputs remain on the RunPod network volume until uploaded separately.
+Live update: 2026-05-25
+
+- Template `9re9ivkicj` is configured for RunPod S3 delivery:
+  - `LONGCAT_OUTPUT_DELIVERY=s3`
+  - `LONGCAT_S3_BUCKET=06j8ee9sbn`
+  - `LONGCAT_S3_ENDPOINT_URL=https://s3api-us-ks-2.runpod.io`
+  - `LONGCAT_S3_REGION=US-KS-2`
+  - `LONGCAT_S3_ADDRESSING_STYLE=path`
+  - `LONGCAT_S3_PREFIX=longcat-outputs`
+  - `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are set in the RunPod template environment only; they are not committed to this repository.
+- The repo code was updated to return `s3_uri` for RunPod S3 instead of a broken presigned URL.
+- Until a rebuilt image is available, the template uses a `dockerEntrypoint` override that copies patched Python files from `/runpod-volume/overrides/app/` into `/app/app/` before starting the normal entrypoint.
+- Authenticated S3 probe succeeded with `put_object`, `head_object`, direct `get_object`, and cleanup of a temporary probe object. Generated presigned URLs were verified to return HTTP 403, matching RunPod's docs.
+- A Serverless smoke generation job was submitted but remained `IN_QUEUE` on the A100 endpoint long enough to indicate capacity delay; it was cancelled before execution to avoid unexpected later spend.
+
+Existing generated outputs remain on the RunPod network volume until uploaded separately.
