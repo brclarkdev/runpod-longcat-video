@@ -70,7 +70,69 @@ Notes:
 
 - The final `du` line confirms `/workspace/models/LongCat-Video` exists, but the reported `512` appears to be block-oriented or incomplete relative to the expected ~77.6 GiB model size; verify with `du -sh /workspace/models/LongCat-Video` from an attached Pod before treating the volume as production-ready.
 - Future bootstrap scripts should use `HF_XET_HIGH_PERFORMANCE=1` and the `hf download ...` CLI instead of deprecated `HF_HUB_ENABLE_HF_TRANSFER=1` and `huggingface-cli`.
-- As of the latest API poll after completion, the temporary hydration Pod still had `desiredStatus: RUNNING` and was still billable at `$0.82/hr`; terminate/delete it after verifying the volume contents.
+- As of the API poll after that false-positive completion, the temporary hydration Pod still had `desiredStatus: RUNNING` and was still billable at `$0.82/hr`.
+- The false-positive Pod was deleted before the final verification Pod was created.
+
+## Production readiness verification
+
+Verified: 2026-05-25T03:04:57Z
+
+A fresh RunPod verification Pod was created with the same network volume attached:
+
+- Name: `longcat-hydrate-verify`
+- ID: `qqi3cfvq8wiiz2`
+- GPU: RTX A6000
+- Image: `runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04`
+- Cost reported by RunPod API: `$0.49/hr`
+- Network volume: `longcat-video-primary` / `06j8ee9sbn`
+- Volume mount: `/workspace`
+
+The corrected hydration used:
+
+```bash
+HF_XET_HIGH_PERFORMANCE=1 hf download meituan-longcat/LongCat-Video --local-dir /workspace/models/LongCat-Video
+```
+
+Verification report written on the volume:
+
+```text
+/workspace/longcat_volume_verification.json
+/workspace/longcat_volume.production_ready
+/workspace/longcat_hydration_v2.done
+```
+
+Verified result:
+
+```json
+{
+  "model_dir": "/workspace/models/LongCat-Video",
+  "timestamp_utc": "2026-05-25T03:04:57Z",
+  "size_bytes": 83309805529,
+  "size_gib": 77.588,
+  "file_count": 62,
+  "required_missing": [],
+  "required_present": [
+    "dit/diffusion_pytorch_model.safetensors.index.json",
+    "text_encoder/model.safetensors.index.json",
+    "vae/diffusion_pytorch_model.safetensors",
+    "scheduler/scheduler_config.json",
+    "tokenizer/tokenizer.json",
+    "lora/cfg_step_lora.safetensors",
+    "lora/refinement_lora.safetensors"
+  ]
+}
+```
+
+Manual verification from the attached Pod also returned:
+
+```text
+78G    /workspace/models/LongCat-Video
+62     files
+```
+
+All temporary hydration/verification Pods have been deleted after verification. `runpodctl pod list --all` returned an empty list, so no billable Pods were left running by this hydration step.
+
+Operational note: a RunPod API key was temporarily injected into an intermediate Pod environment to let that Pod self-stop/status-mark during hydration. Rotate the RunPod API key if that exposure is unacceptable under the account's security policy.
 
 ## Runtime paths
 
