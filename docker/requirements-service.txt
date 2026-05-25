@@ -5,5 +5,6 @@ pydantic==2.10.4
 aiofiles==24.1.0
 requests==2.32.3
 runpod==1.7.7
-huggingface_hub[cli]==0.27.1
+huggingface_hub[hf_xet]>=0.32.0
+hf_xet>=1.1.0
 boto3==1.35.90

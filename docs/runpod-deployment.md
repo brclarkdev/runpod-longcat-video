@@ -57,7 +57,20 @@ print(json.dumps({k:p.get(k) for k in ['id','name','desiredStatus','costPerHr','
 PY
 ```
 
-When hydration is complete, the container should exit. Verify the volume from a Pod terminal or via RunPod volume file access, then terminate/delete the temporary hydration Pod if it is still present.
+Hydration log reported completion on 2026-05-24:
+
+```text
+/usr/local/lib/python3.10/dist-packages/huggingface_hub/constants.py:277: FutureWarning: The `HF_HUB_ENABLE_HF_TRANSFER` environment variable is deprecated as 'hf_transfer' is not used anymore. Please use `HF_XET_HIGH_PERFORMANCE` instead to enable high performance transfer with Xet.
+Warning: `huggingface-cli` is deprecated and no longer works. Use `hf` instead.
+512    /workspace/models/LongCat-Video
+LongCat hydration complete
+```
+
+Notes:
+
+- The final `du` line confirms `/workspace/models/LongCat-Video` exists, but the reported `512` appears to be block-oriented or incomplete relative to the expected ~77.6 GiB model size; verify with `du -sh /workspace/models/LongCat-Video` from an attached Pod before treating the volume as production-ready.
+- Future bootstrap scripts should use `HF_XET_HIGH_PERFORMANCE=1` and the `hf download ...` CLI instead of deprecated `HF_HUB_ENABLE_HF_TRANSFER=1` and `huggingface-cli`.
+- As of the latest API poll after completion, the temporary hydration Pod still had `desiredStatus: RUNNING` and was still billable at `$0.82/hr`; terminate/delete it after verifying the volume contents.
 
 ## Runtime paths
 

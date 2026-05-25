@@ -226,8 +226,8 @@ export HF_HOME=$RUNPOD_VOLUME_ROOT/cache/huggingface
 export HF_HUB_CACHE=$HF_HOME/hub
 
 mkdir -p "$LONGCAT_MODEL_DIR" "$HF_HUB_CACHE"
-python3 -m pip install -U "huggingface_hub[cli]"
-huggingface-cli download meituan-longcat/LongCat-Video --local-dir "$LONGCAT_MODEL_DIR"
+python3 -m pip install -U "huggingface_hub[hf_xet]" hf_xet
+HF_XET_HIGH_PERFORMANCE=1 hf download meituan-longcat/LongCat-Video --local-dir "$LONGCAT_MODEL_DIR"
 
 du -sh "$LONGCAT_MODEL_DIR"
 find "$LONGCAT_MODEL_DIR" -maxdepth 3 -type f | wc -l
@@ -492,8 +492,8 @@ export LONGCAT_MODEL_DIR=$RUNPOD_VOLUME_ROOT/models/LongCat-Video
 export HF_HOME=$RUNPOD_VOLUME_ROOT/cache/huggingface
 export HF_HUB_CACHE=$HF_HOME/hub
 mkdir -p "$LONGCAT_MODEL_DIR" "$HF_HUB_CACHE"
-python3 -m pip install -U "huggingface_hub[cli]"
-huggingface-cli download meituan-longcat/LongCat-Video --local-dir "$LONGCAT_MODEL_DIR"
+python3 -m pip install -U "huggingface_hub[hf_xet]" hf_xet
+HF_XET_HIGH_PERFORMANCE=1 hf download meituan-longcat/LongCat-Video --local-dir "$LONGCAT_MODEL_DIR"
 du -sh "$LONGCAT_MODEL_DIR"
 ```
 

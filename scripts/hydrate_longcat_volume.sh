@@ -15,11 +15,12 @@ fi
 export LONGCAT_MODEL_DIR="${LONGCAT_MODEL_DIR:-$RUNPOD_VOLUME_ROOT/models/LongCat-Video}"
 export HF_HOME="${HF_HOME:-$RUNPOD_VOLUME_ROOT/cache/huggingface}"
 export HF_HUB_CACHE="${HF_HUB_CACHE:-$HF_HOME/hub}"
+export HF_XET_HIGH_PERFORMANCE="${HF_XET_HIGH_PERFORMANCE:-1}"
 
 mkdir -p "$LONGCAT_MODEL_DIR" "$HF_HUB_CACHE"
-python3 -m pip install -U "huggingface_hub[cli]"
+python3 -m pip install -U "huggingface_hub[hf_xet]" hf_xet
 
-huggingface-cli download meituan-longcat/LongCat-Video --local-dir "$LONGCAT_MODEL_DIR"
+hf download meituan-longcat/LongCat-Video --local-dir "$LONGCAT_MODEL_DIR"
 
 python3 "$(dirname "$0")/verify_longcat_volume.py" "$LONGCAT_MODEL_DIR"
 du -sh "$LONGCAT_MODEL_DIR"

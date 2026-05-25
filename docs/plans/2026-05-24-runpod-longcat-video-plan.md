@@ -108,7 +108,7 @@ Dockerfile requirements:
   - `git clone --single-branch --branch main https://github.com/meituan-longcat/LongCat-Video /opt/LongCat-Video`
 - Install upstream requirements except duplicate torch handling if necessary.
 - Install service requirements:
-  - `fastapi`, `uvicorn[standard]`, `python-multipart`, `pydantic`, `aiofiles`, `requests`, `huggingface_hub[cli]`.
+  - `fastapi`, `uvicorn[standard]`, `python-multipart`, `pydantic`, `aiofiles`, `requests`, `huggingface_hub[hf_xet]`, `hf_xet`.
 
 Verification:
 - Build locally or on RunPod:
@@ -131,9 +131,9 @@ Files:
 
 `download_models.sh` behavior:
 - Set `MODEL_DIR=${MODEL_DIR:-/workspace/models/LongCat-Video}`.
-- Install/verify `huggingface-cli`.
+- Install/verify the current `hf` CLI from `huggingface_hub`.
 - Run:
-  - `huggingface-cli download meituan-longcat/LongCat-Video --local-dir "$MODEL_DIR"`
+  - `HF_XET_HIGH_PERFORMANCE=1 hf download meituan-longcat/LongCat-Video --local-dir "$MODEL_DIR"`
 - Print total disk usage:
   - `du -sh "$MODEL_DIR"`
 
@@ -531,9 +531,9 @@ pip install torch==2.6.0+cu124 torchvision==0.21.0+cu124 torchaudio==2.6.0 --ind
 pip install ninja psutil packaging
 pip install flash_attn==2.7.4.post1
 pip install -r requirements.txt
-pip install "huggingface_hub[cli]"
+pip install "huggingface_hub[hf_xet]" hf_xet
 
-huggingface-cli download meituan-longcat/LongCat-Video --local-dir /workspace/models/LongCat-Video
+HF_XET_HIGH_PERFORMANCE=1 hf download meituan-longcat/LongCat-Video --local-dir /workspace/models/LongCat-Video
 
 torchrun run_demo_text_to_video.py --checkpoint_dir=/workspace/models/LongCat-Video
 ```
