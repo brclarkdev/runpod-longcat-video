@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
 ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+ALLOWED_VIDEO_SUFFIXES = {".mp4", ".mov", ".webm", ".mkv"}
 
 
 def _is_public_host(hostname: str) -> bool:
@@ -22,21 +23,32 @@ def _is_public_host(hostname: str) -> bool:
     return True
 
 
-def validate_image_url(url: str) -> str:
+def validate_media_url(url: str, allowed_suffixes: set[str], label: str) -> str:
     parsed = urlparse(url)
     if parsed.scheme != "https":
-        raise ValueError("image_url must use https")
+        raise ValueError(f"{label} must use https")
     if not parsed.hostname:
-        raise ValueError("image_url must include a hostname")
+        raise ValueError(f"{label} must include a hostname")
     _is_public_host(parsed.hostname)
     suffix = Path(parsed.path).suffix.lower()
-    if suffix and suffix not in ALLOWED_IMAGE_SUFFIXES:
-        raise ValueError("image_url must point to PNG, JPEG, or WebP")
+    if suffix and suffix not in allowed_suffixes:
+        raise ValueError(f"{label} has unsupported file type")
     return url
 
 
-def download_limited(url: str, dest: Path, max_bytes: int = MAX_IMAGE_BYTES) -> Path:
-    validate_image_url(url)
+def validate_image_url(url: str) -> str:
+    return validate_media_url(url, ALLOWED_IMAGE_SUFFIXES, "image_url")
+
+
+def validate_video_url(url: str) -> str:
+    return validate_media_url(url, ALLOWED_VIDEO_SUFFIXES, "video_url")
+
+
+def download_limited(url: str, dest: Path, max_bytes: int = MAX_IMAGE_BYTES, media_type: str = "image") -> Path:
+    if media_type == "video":
+        validate_video_url(url)
+    else:
+        validate_image_url(url)
     req = Request(url, headers={"User-Agent": "runpod-longcat-video/1.0"})
     with urlopen(req, timeout=30) as resp:
         length = resp.headers.get("Content-Length")

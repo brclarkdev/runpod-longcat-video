@@ -66,37 +66,42 @@ class ImageVideoRequest(BaseModel):
 class VideoContinuationRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
     negative_prompt: Optional[str] = Field(default=None, max_length=2000)
-    input_video: str = Field(..., description="URL or base64 of input video to continue")
-    height: int = 480
-    width: int = 832
+    video_url: Optional[str] = None
+    video_base64: Optional[str] = None
+    resolution: str = "480p"
     num_frames: int = 93
+    num_cond_frames: int = 13
     seed: int = 42
     use_distill: bool = True
     use_refine: bool = False
+    spatial_refine_only: bool = False
 
 
 class LongVideoRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=2000)
+    prompt: str = Field(..., min_length=1, max_length=4000)
     negative_prompt: Optional[str] = Field(default=None, max_length=2000)
     height: int = 480
     width: int = 832
     num_frames: int = 93
+    num_cond_frames: int = 13
+    num_segments: int = 1
     seed: int = 42
     use_distill: bool = True
     use_refine: bool = False
-    # Long video may support additional params like total_seconds or chunking
+    spatial_refine_only: bool = False
 
 
 class InteractiveVideoRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=2000)
+    prompts: list[str] = Field(..., min_length=1, max_length=12)
     negative_prompt: Optional[str] = Field(default=None, max_length=2000)
     height: int = 480
     width: int = 832
     num_frames: int = 93
+    num_cond_frames: int = 13
     seed: int = 42
     use_distill: bool = True
     use_refine: bool = False
-    # Interactive may require additional control parameters
+    spatial_refine_only: bool = False
 
 
 class JobResponse(BaseModel):

@@ -53,7 +53,20 @@ async def handler(event):
 
         if mode == "video_continuation":
             req = VideoContinuationRequest(**{k: v for k, v in data.items() if k in VideoContinuationRequest.model_fields})
-            output = get_service().generate_video_continuation(job_id=job_id, **req.model_dump())
+            video_path = _materialize_video(data, job_id)
+            output = get_service().generate_video_continuation(
+                job_id=job_id,
+                video_path=video_path,
+                prompt=req.prompt,
+                negative_prompt=req.negative_prompt,
+                resolution=req.resolution,
+                num_frames=req.num_frames,
+                num_cond_frames=req.num_cond_frames,
+                seed=req.seed,
+                use_distill=req.use_distill,
+                use_refine=req.use_refine,
+                spatial_refine_only=req.spatial_refine_only,
+            )
             return {"job_id": job_id, "status": "completed", **deliver_video(output, job_id)}
 
         if mode == "long_video":
@@ -82,6 +95,19 @@ def _materialize_image(data: dict, job_id: str) -> Path:
         path = upload_dir / f"{job_id}.png"
         return decode_base64_limited(data["image_base64"], path)
     raise ValueError("image jobs require image_url or image_base64")
+
+
+def _materialize_video(data: dict, job_id: str) -> Path:
+    upload_dir = config.LONGCAT_OUTPUT_DIR / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    if data.get("video_url"):
+        suffix = Path(data["video_url"].split("?")[0]).suffix or ".mp4"
+        path = upload_dir / f"{job_id}{suffix}"
+        return download_limited(data["video_url"], path, max_bytes=500 * 1024 * 1024, media_type="video")
+    if data.get("video_base64"):
+        path = upload_dir / f"{job_id}.mp4"
+        return decode_base64_limited(data["video_base64"], path, max_bytes=500 * 1024 * 1024)
+    raise ValueError("video_continuation jobs require video_url or video_base64")
 
 
 if __name__ == "__main__":
