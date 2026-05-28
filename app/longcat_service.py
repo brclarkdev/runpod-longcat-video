@@ -112,6 +112,26 @@ class LongCatService:
             fps = 30
         return write_mp4(output, self.output_dir / job_id / "output.mp4", fps=fps)
 
+    # === New generation modes (stubs - implement pipeline calls when available) ===
+
+    def generate_video_continuation(self, job_id: str, prompt: str, input_video: str, negative_prompt: Optional[str] = None, height: int = 480, width: int = 832, num_frames: int = 93, seed: int = 42, use_distill: bool = True, use_refine: bool = False) -> Path:
+        if config.SKIP_MODEL_LOAD:
+            return self._write_placeholder(job_id, "video_continuation")
+        # TODO: Implement using pipeline continuation method when available
+        raise NotImplementedError("Video continuation not yet implemented in LongCatService")
+
+    def generate_long_video(self, job_id: str, prompt: str, negative_prompt: Optional[str] = None, height: int = 480, width: int = 832, num_frames: int = 93, seed: int = 42, use_distill: bool = True, use_refine: bool = False) -> Path:
+        if config.SKIP_MODEL_LOAD:
+            return self._write_placeholder(job_id, "long_video")
+        # TODO: Implement long video generation when pipeline supports it
+        raise NotImplementedError("Long video generation not yet implemented in LongCatService")
+
+    def generate_interactive_video(self, job_id: str, prompt: str, negative_prompt: Optional[str] = None, height: int = 480, width: int = 832, num_frames: int = 93, seed: int = 42, use_distill: bool = True, use_refine: bool = False) -> Path:
+        if config.SKIP_MODEL_LOAD:
+            return self._write_placeholder(job_id, "interactive")
+        # TODO: Implement interactive video generation when pipeline supports it
+        raise NotImplementedError("Interactive video generation not yet implemented in LongCatService")
+
     def _write_placeholder(self, job_id: str, mode: str) -> Path:
         path = self.output_dir / job_id / "output.txt"
         path.parent.mkdir(parents=True, exist_ok=True)

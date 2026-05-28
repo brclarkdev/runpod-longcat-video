@@ -7,7 +7,13 @@ from app.security import decode_base64_limited, download_limited
 from app import config
 from app.longcat_service import LongCatService
 from app.output_delivery import deliver_video
-from app.schemas import ImageVideoRequest, TextVideoRequest
+from app.schemas import (
+    ImageVideoRequest,
+    InteractiveVideoRequest,
+    LongVideoRequest,
+    TextVideoRequest,
+    VideoContinuationRequest,
+)
 
 _service = None
 
@@ -28,6 +34,7 @@ async def handler(event):
             req = TextVideoRequest(**{k: v for k, v in data.items() if k in TextVideoRequest.model_fields})
             output = get_service().generate_text_video(job_id=job_id, **req.model_dump())
             return {"job_id": job_id, "status": "completed", **deliver_video(output, job_id)}
+
         if mode == "image":
             req = ImageVideoRequest(**{k: v for k, v in data.items() if k in ImageVideoRequest.model_fields})
             image_path = _materialize_image(data, job_id)
@@ -43,7 +50,23 @@ async def handler(event):
                 use_refine=req.use_refine,
             )
             return {"job_id": job_id, "status": "completed", **deliver_video(output, job_id)}
-        raise ValueError("mode must be text or image")
+
+        if mode == "video_continuation":
+            req = VideoContinuationRequest(**{k: v for k, v in data.items() if k in VideoContinuationRequest.model_fields})
+            output = get_service().generate_video_continuation(job_id=job_id, **req.model_dump())
+            return {"job_id": job_id, "status": "completed", **deliver_video(output, job_id)}
+
+        if mode == "long_video":
+            req = LongVideoRequest(**{k: v for k, v in data.items() if k in LongVideoRequest.model_fields})
+            output = get_service().generate_long_video(job_id=job_id, **req.model_dump())
+            return {"job_id": job_id, "status": "completed", **deliver_video(output, job_id)}
+
+        if mode == "interactive":
+            req = InteractiveVideoRequest(**{k: v for k, v in data.items() if k in InteractiveVideoRequest.model_fields})
+            output = get_service().generate_interactive_video(job_id=job_id, **req.model_dump())
+            return {"job_id": job_id, "status": "completed", **deliver_video(output, job_id)}
+
+        raise ValueError("mode must be one of: text, image, video_continuation, long_video, interactive")
     except Exception as exc:
         return {"job_id": job_id, "status": "failed", "error": repr(exc)}
 

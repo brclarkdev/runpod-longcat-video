@@ -63,6 +63,42 @@ class ImageVideoRequest(BaseModel):
         return value
 
 
+class VideoContinuationRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    negative_prompt: Optional[str] = Field(default=None, max_length=2000)
+    input_video: str = Field(..., description="URL or base64 of input video to continue")
+    height: int = 480
+    width: int = 832
+    num_frames: int = 93
+    seed: int = 42
+    use_distill: bool = True
+    use_refine: bool = False
+
+
+class LongVideoRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    negative_prompt: Optional[str] = Field(default=None, max_length=2000)
+    height: int = 480
+    width: int = 832
+    num_frames: int = 93
+    seed: int = 42
+    use_distill: bool = True
+    use_refine: bool = False
+    # Long video may support additional params like total_seconds or chunking
+
+
+class InteractiveVideoRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    negative_prompt: Optional[str] = Field(default=None, max_length=2000)
+    height: int = 480
+    width: int = 832
+    num_frames: int = 93
+    seed: int = 42
+    use_distill: bool = True
+    use_refine: bool = False
+    # Interactive may require additional control parameters
+
+
 class JobResponse(BaseModel):
     job_id: str
     status: JobStatus
